@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
+const ADMIN_EMAILS = ["lucieob29@gmail.com", "sci.lpm.37@gmail.com"];
+
 const NAV_ITEMS = [
   { href: "/", label: "Tableau de bord", icon: "🏠" },
   { href: "/baux", label: "Baux", icon: "📋" },
@@ -44,6 +46,19 @@ export default function Navigation() {
               <span>{item.label}</span>
             </Link>
           ))}
+          {user && ADMIN_EMAILS.includes(user.email ?? "") && (
+            <Link
+              href="/admin"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 transition-colors ${
+                pathname === "/admin"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-300 hover:bg-gray-800"
+              }`}
+            >
+              <span>🔐</span>
+              <span>Administration</span>
+            </Link>
+          )}
         </div>
         {user && (
           <div className="mt-4 pt-4 border-t border-gray-700">
@@ -87,6 +102,18 @@ export default function Navigation() {
                 <span>{item.label}</span>
               </Link>
             ))}
+            {user && ADMIN_EMAILS.includes(user.email ?? "") && (
+              <Link
+                href="/admin"
+                onClick={() => setMenuOpen(false)}
+                className={`flex items-center gap-3 px-6 py-3 ${
+                  pathname === "/admin" ? "bg-blue-600" : "hover:bg-gray-800"
+                }`}
+              >
+                <span>🔐</span>
+                <span>Administration</span>
+              </Link>
+            )}
             {user && (
               <button
                 onClick={handleSignOut}
