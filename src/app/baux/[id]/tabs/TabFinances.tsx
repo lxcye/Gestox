@@ -1,7 +1,7 @@
 "use client";
 
 import type { Bail, BailRevisionLoyer, BailRegularisationCharges, LigneCharge } from "@/lib/types";
-import { getParametres, savePaiement } from "@/lib/store";
+import { getParametres, savePaiement, getLocataire, saveLocataire } from "@/lib/store";
 import { generateRevisionLoyerPDF, generateRegularisationChargesPDF } from "@/lib/generate-revision-pdf";
 import { useState } from "react";
 
@@ -100,7 +100,15 @@ export default function TabFinances({ bail, onSave }: Props) {
     const p = getParametres();
     const doc = generateRevisionLoyerPDF(rev, bail, p);
     doc.save(`Revision_loyer_${bail.locataire.nom}_${rev.date_courrier}.pdf`);
-    save({ ...bail, finances: { ...bail.finances, loyer_hc: rev.loyer_choisi, loyer_total: rev.loyer_choisi + bail.finances.charges } });
+  }
+
+  function applyRevisionLoyer(rev: BailRevisionLoyer) {
+    const updatedBail = { ...bail, finances: { ...bail.finances, loyer_hc: rev.loyer_choisi, loyer_total: rev.loyer_choisi + bail.finances.charges } };
+    save(updatedBail);
+    if (bail.finances.locataire_id) {
+      const loc = getLocataire(bail.finances.locataire_id);
+      if (loc) saveLocataire({ ...loc, loyer: rev.loyer_choisi });
+    }
   }
 
   function addRegularisation() {
@@ -331,8 +339,25 @@ export default function TabFinances({ bail, onSave }: Props) {
                     {!appliqueMax && <><span className="mx-3 text-gray-300">|</span><span className="text-gray-500">Choisie : </span><span className="font-medium text-blue-600">+{augChoisie} €</span></>}
                   </div>
                 </div>
-                <div className="flex gap-3 pt-1">
+                <div className="flex flex-wrap gap-3 pt-1 items-center">
                   <button onClick={() => downloadRevPDF(rev)} disabled={!rev.indice_nouveau || !rev.indice_ancien} className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50">Télécharger le courrier PDF</button>
+                  {rev.date_effet && (() => {
+                    const today = new Date(); today.setHours(0,0,0,0);
+                    const effet = new Date(rev.date_effet); effet.setHours(0,0,0,0);
+                    const active = effet <= today;
+                    const dejaPris = Math.abs(bail.finances.loyer_hc - rev.loyer_choisi) < 0.01;
+                    if (dejaPris) return <span className="text-xs text-green-600 font-medium">✓ Nouveau loyer appliqué ({rev.loyer_choisi.toFixed(2)} €)</span>;
+                    return (
+                      <button
+                        onClick={() => applyRevisionLoyer(rev)}
+                        disabled={!active}
+                        title={!active ? `Applicable à partir du ${new Date(rev.date_effet).toLocaleDateString("fr-FR")}` : ""}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${active ? "bg-green-600 text-white hover:bg-green-700" : "bg-gray-100 text-gray-400 cursor-not-allowed"}`}
+                      >
+                        {active ? `Appliquer le nouveau loyer (${rev.loyer_choisi.toFixed(2)} €)` : `Applicable le ${new Date(rev.date_effet).toLocaleDateString("fr-FR")}`}
+                      </button>
+                    );
+                  })()}
                   <button onClick={() => deleteRev(rev.id)} className="text-red-500 hover:underline text-sm">Supprimer</button>
                 </div>
               </div>
