@@ -295,9 +295,19 @@ export default function TabFinances({ bail, onSave }: Props) {
                   </div>
                   {trimestreNum > 0 && (
                     <p className="text-xs text-blue-600 bg-blue-50 border border-blue-100 rounded px-3 py-1.5">
-                      ℹ️ {messageJO(trimestreNum)}{rev.date_jo_irl && <> — Date JO récupérée : <strong>{rev.date_jo_irl}</strong></>}
+                      ℹ️ {messageJO(trimestreNum)}
                     </p>
                   )}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Date de parution au Journal Officiel</label>
+                  <input
+                    type="text"
+                    value={rev.date_jo_irl ?? ""}
+                    onChange={e => updateRev(rev.id, "date_jo_irl", e.target.value)}
+                    placeholder="ex : 15 juillet 2026"
+                    className="w-full border rounded px-2 py-1.5 text-sm"
+                  />
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[["Loyer actuel (€)", rev.ancien_loyer, "ancien_loyer"], ["Indice IRL ancien", rev.indice_ancien, "indice_ancien"], ["Indice IRL nouveau", rev.indice_nouveau, "indice_nouveau"]].map(([label, val, field]) => (
